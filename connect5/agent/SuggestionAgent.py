@@ -59,7 +59,7 @@ class MCTSNode(object):
 
     def add_suggested_child(self, children):
         for child, move in children:
-            self.children = self.children + MCTSNode(child, self, )
+            self.children.append(MCTSNode(child, self, move))
 
 
 # MCTS 탐색 결과로 돌을 놓는 에이전트

@@ -113,34 +113,52 @@ def presuggestion(game_state):
                         if weights[end.row][end.col] != game_state.next_player:
                             weights[end.row][end.col] -= 50
 
-    # pprint.pprint(weights)
     min_weight = 100
-    candidates = []
-
+    best_candidate = None
     for r in range(1, num_rows - 1):
         for c in range(1, num_cols - 1):
             if weights[r][c] < min_weight:
                 candidate = Point(row=r, col=c)
                 if game_state.is_valid_move(Move.play(candidate)):
                     min_weight = weights[r][c]
-
-    if min_weight < 100:
-        for r in range(1, num_rows - 1):
-            for c in range(1, num_cols - 1):
-                if weights[r][c] == min_weight:
-                    candidates.append(Point(row=r, col=c))
-
-    if not candidates:
-        for r in range(1, game_state.board.num_rows + 1):
-            for c in range(1, game_state.board.num_cols + 1):
-                candidate = Point(row=r, col=c)
-                if game_state.is_valid_move(Move.play(candidate)):
-                    candidates.append(candidate)
-
-    return [
-        (
-            game_state.apply_move(Move.play(candidate)),
-            Move.play(candidate),
+                    best_candidate = candidate
+    if min_weight < 0:
+        # print(best_candidate, min_weight)
+        # return Move.play(best_candidate)
+        return (
+            game_state.apply_move(Move.play(best_candidate)),
+            Move.play(best_candidate),
         )
-        for candidate in candidates
-    ]
+    return None
+
+    # # pprint.pprint(weights)
+    # min_weight = 100
+    # candidates = []
+
+    # for r in range(1, num_rows - 1):
+    #     for c in range(1, num_cols - 1):
+    #         if weights[r][c] < min_weight:
+    #             candidate = Point(row=r, col=c)
+    #             if game_state.is_valid_move(Move.play(candidate)):
+    #                 min_weight = weights[r][c]
+
+    # if min_weight < 100:
+    #     for r in range(1, num_rows - 1):
+    #         for c in range(1, num_cols - 1):
+    #             if weights[r][c] == min_weight:
+    #                 candidates.append(Point(row=r, col=c))
+
+    # if not candidates:
+    #     for r in range(1, game_state.board.num_rows + 1):
+    #         for c in range(1, game_state.board.num_cols + 1):
+    #             candidate = Point(row=r, col=c)
+    #             if game_state.is_valid_move(Move.play(candidate)):
+    #                 candidates.append(candidate)
+
+    # return [
+    #     (
+    #         game_state.apply_move(Move.play(candidate)),
+    #         Move.play(candidate),
+    #     )
+    #     for candidate in candidates
+    # ]
