@@ -28,6 +28,7 @@ class MCTSNode(object):
         new_game_state = self.game_state.apply_move(new_move)
         new_node = MCTSNode(new_game_state, self, new_move)
         self.children.append(new_node)
+        return new_node
 
     # 노드의 값을 갱신하는 메소드
     def record_win(self, winner):
@@ -57,9 +58,13 @@ class MCTSNode(object):
                     return child
         return childable
 
-    def add_suggested_child(self, children):
-        for child, move in children:
-            self.children = self.children + MCTSNode(child, self, )
+    def add_suggested_child_or_random(self, child):
+        if child is not None:
+            new_node = MCTSNode(child[0], self, child[1])
+            self.children = self.children.append(new_node)
+            return new_node
+        else:
+            return self.add_random_child()
 
 
 # MCTS 탐색 결과로 돌을 놓는 에이전트
@@ -84,15 +89,12 @@ class SuggestionAgent(agent.Agent):
                 node = self.select_child(node)
 
             if node.can_add_child():
-                node.add_suggested_child(self.suggestion_function(game_state))
-                node.add_random_child()
+                node = node.add_suggested_child_or_random(self.suggestion_function(game_state))
 
-            for child in node.children:
-                winner = SuggestionAgent.simulate_random_game(child.game_state)
-
-                while child is not None:
-                    child.record_win(winner)
-                    child = node.parent
+            winner = self.simulate_random_game(node.game_state)
+            while node is not None:
+                node.record_win(winner)
+                node = node.parent
 
         self.cached_tree = root
 
