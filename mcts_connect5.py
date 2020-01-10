@@ -5,7 +5,7 @@ from connect5 import types
 from connect5 import mcts
 from connect5.utils import print_board, print_move, point_from_coords
 
-BOARD_SIZE = 9
+BOARD_SIZE = 15
 
 def main():
     game = connect5_board.GameState.new_game(BOARD_SIZE)

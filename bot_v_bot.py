@@ -6,7 +6,7 @@ from connect5.utils import print_board, print_move
 import time
 
 def main():
-    board_size = 9
+    board_size = 15
     game = connect5_board.GameState.new_game(board_size)
     bots = {
         types.Player.black: agent.naive.RandomBot(),

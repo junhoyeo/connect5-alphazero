@@ -32,30 +32,38 @@ class RandomBot(Agent):
                         weights[neighbor.row][neighbor.col] -= 1
 
                 # 다른 사람 돌이 세 개 이상, 가로 또는 세로로
-                center = game_state.board._grid[r][c]
-                # same with row - 1, row + 1
-                if game_state.board.get(neighbors[0]) == center and \
-                    game_state.board.get(neighbors[1]) == center:
+                if game_state.board._grid[r][c] == game_state.next_player.other:
+                    center = game_state.board._grid[r][c]
+                    # same with row - 1, row + 1
+                    if game_state.board.get(neighbors[0]) == center and \
+                        game_state.board.get(neighbors[1]) == center:
 
-                    start = neighbors[0].neighbors()[0]
-                    weights[start.row][start.col] -= 50
+                        print(center, neighbors[0], neighbors[1])
 
-                    end = neighbors[1].neighbors()[1]
-                    if end.row <= game_state.board.num_rows:
-                        weights[end.row][end.col] -= 50
+                        start = neighbors[0].neighbors()[0]
+                        # only decrease weight when this is current problem
+                        if weights[start.row][start.col] != game_state.next_player:
+                            weights[start.row][start.col] -= 50
 
-                # same with col - 1, col + 1
-                if game_state.board.get(neighbors[2]) == center and \
-                    game_state.board.get(neighbors[3]) == center:
+                        end = neighbors[1].neighbors()[1]
+                        if end.row <= game_state.board.num_rows:
+                            if weights[end.row][end.col] != game_state.next_player:
+                                weights[end.row][end.col] -= 50
 
-                    start = neighbors[2].neighbors()[2]
-                    weights[start.row][start.col] -= 50
+                    # same with col - 1, col + 1
+                    if game_state.board.get(neighbors[2]) == center and \
+                        game_state.board.get(neighbors[3]) == center:
 
-                    end = neighbors[3].neighbors()[3]
-                    if end.col <= game_state.board.num_cols:
-                        weights[end.row][end.col] -= 50
+                        start = neighbors[2].neighbors()[2]
+                        if weights[start.row][start.col] != game_state.next_player:
+                            weights[start.row][start.col] -= 50
 
-        pprint.pprint(weights)
+                        end = neighbors[3].neighbors()[3]
+                        if end.col <= game_state.board.num_cols:
+                            if weights[end.row][end.col] != game_state.next_player:
+                                weights[end.row][end.col] -= 50
+
+        # pprint.pprint(weights)
         min_weight = 100
         best_candidate = None
         for r in range(1, num_rows - 1):
