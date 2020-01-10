@@ -6,12 +6,12 @@ from connect5.utils import print_board, print_move, point_from_coords
 from six.moves import input
 
 def main():
-    board_size = 9
+    board_size = 8
     game = connect5_board.GameState.new_game(board_size)
     bot = agent.RandomBot()
 
     while not game.is_over():
-        print(chr(27) + "[2J")
+        # print(chr(27) + "[2J")
         print_board(game.board)
         if game.next_player == types.Player.black:
             human_move = input('-- ')
@@ -22,7 +22,7 @@ def main():
         print_move(game.next_player, move)
         game = game.apply_move(move)
 
-    print(chr(27) + "[2J")
+    # print(chr(27) + "[2J")
     print_board(game.board)
 
     if game.winner is "Draw":

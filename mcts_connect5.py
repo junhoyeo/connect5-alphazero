@@ -5,11 +5,11 @@ from connect5 import types
 from connect5 import mcts
 from connect5.utils import print_board, print_move, point_from_coords
 
-BOARD_SIZE = 9
+BOARD_SIZE = 8
 
 def main():
     game = connect5_board.GameState.new_game(BOARD_SIZE)
-    bot = mcts.MCTSAgent(500, temperature=1.4)
+    bot = mcts.MCTSAgent(100, temperature=1.25)
 
     while not game.is_over():
         print_board(game.board)
