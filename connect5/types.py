@@ -9,11 +9,11 @@ class Player(enum.Enum):
   white = WHITE
 
   @property
-  def other(self):
+  def other(self) -> self:
     return Player.black if self == Player.white else Player.white
 
 class Point(namedtuple('Point', 'row col')):
-  def neighbors(self):
+  def neighbors(self) -> [Point] * 4:
     return [
       Point(self.row - 1, self.col),
       Point(self.row + 1, self.col),
