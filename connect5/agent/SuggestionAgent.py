@@ -3,7 +3,6 @@ import random
 
 from connect5 import agent
 from connect5.types import Player
-from connect5.utils import coords_from_point
 
 
 # 트리의 노드 클래스
@@ -55,6 +54,7 @@ class MCTSNode(object):
         for childP in self.children:
             for child in childP.children:
                 if child.game_state.board._grid == childable.game_state.board._grid:
+                    child.parent = None
                     return child
         return childable
 
@@ -103,8 +103,6 @@ class SuggestionAgent(agent.Agent):
             for child in root.children
         ]
         scored_moves.sort(key=lambda x: x[0], reverse=True)
-        for s, m, n in scored_moves[:10]:
-            print('%s - %.3f (%d)' % (m, s, n))
 
         best_move = None
         best_pct = -1.0
@@ -113,7 +111,6 @@ class SuggestionAgent(agent.Agent):
             if child_pct > best_pct:
                 best_pct = child_pct
                 best_move = child.move
-        print('Select move %s with win pct %.3f' % (best_move, best_pct))
         return best_move
 
     # 탐색할 자식 노드를 선택하는 메소드
