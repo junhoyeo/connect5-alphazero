@@ -58,7 +58,8 @@ class MCTSNode(object):
         return childable
 
     def add_suggested_child(self, children):
-        self.children = self.children + children
+        for child, move in children:
+            self.children = self.children + MCTSNode(child, self, )
 
 
 # MCTS 탐색 결과로 돌을 놓는 에이전트
