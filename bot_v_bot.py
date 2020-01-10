@@ -3,14 +3,15 @@ from connect5 import agent
 from connect5 import board as connect5_board
 from connect5 import types
 from connect5.utils import print_board, print_move
+from connect5 import mcts
 import time
 
 def main():
-    board_size = 9
+    board_size = 8
     game = connect5_board.GameState.new_game(board_size)
     bots = {
         types.Player.black: agent.naive.RandomBot(),
-        types.Player.white: agent.naive.RandomBot(),
+        types.Player.white: mcts.MCTSAgent(1000, 1.4, suggestion_function),
     }
 
     while not game.is_over():
