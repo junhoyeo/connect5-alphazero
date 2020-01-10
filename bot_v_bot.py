@@ -12,7 +12,7 @@ def main():
     board_size = 8
     game = connect5_board.GameState.new_game(board_size)
     bots = {
-        types.Player.black: agent.naive.RandomBot(),
+        types.Player.black: SuggestionAgent(1000, 1.3, presuggestion),
         types.Player.white: SuggestionAgent(1000, 1.4, presuggestion),
     }
 

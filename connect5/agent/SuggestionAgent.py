@@ -59,9 +59,9 @@ class MCTSNode(object):
         return childable
 
     def add_suggested_child_or_random(self, child):
-        if child is not None:
+        if (child is not None) and child[1] in self.unvisited_moves:
             new_node = MCTSNode(child[0], self, child[1])
-            self.children = self.children.append(new_node)
+            self.children.append(new_node)
             return new_node
         else:
             return self.add_random_child()

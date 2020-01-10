@@ -123,8 +123,7 @@ def presuggestion(game_state):
                     min_weight = weights[r][c]
                     best_candidate = candidate
     if min_weight < 0:
-        # print(best_candidate, min_weight)
-        # return Move.play(best_candidate)
+        #return Move.play(best_candidate)
         return (
             game_state.apply_move(Move.play(best_candidate)),
             Move.play(best_candidate),
