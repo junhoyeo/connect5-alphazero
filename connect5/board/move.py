@@ -1,7 +1,7 @@
 from connect5.types import Point
 
 class Move:
-  def __init__(self, point: Point | None = None):
+  def __init__(self, point: Point or None = None):
     assert (Point is not None)
     self.point = point
 
