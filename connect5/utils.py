@@ -9,12 +9,10 @@ STONE_TO_CHAR = {
     types.Player.white: ' o ',
 }
 
-
 # 돌을 어디에 착수했는지 출력하는 함수
 def print_move(player, move):
     move_str = '%s%d' % (COLS[move.point.col - 1], move.point.row)
     print('%s %s' % (player, move_str))
-
 
 # 바둑판을 출력하는 함수
 def print_board(board):
@@ -27,13 +25,11 @@ def print_board(board):
         print('%s%d %s' % (bump, row, ''.join(line)))
     print('    ' + '  '.join(COLS[:board.num_cols]))
 
-
 # 좌표를 바둑판 내 위치로 변환하는 함수
 def point_from_coords(coords):
     col = COLS.index(coords[0]) + 1
     row = int(coords[1:])
     return types.Point(row=row, col=col)
-
 
 # 바둑판 내 위치를 좌표로 변환하는 함수
 def coords_from_point(point):
