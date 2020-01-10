@@ -4,10 +4,19 @@ from connect5.agent.base import Agent
 from connect5.board import Move
 from connect5.types import Player, Point
 
+def get_diagonals(point):
+    return [
+        Point(point.row + 1, point.col + 1),
+        Point(point.row + 1, point.col - 1),
+        Point(point.row - 1, point.col + 1),
+        Point(point.row - 1, point.col - 1),
+    ]
+
 # 임의의 위치에 돌을 놓는 에이전트
 class RandomBot(Agent):
     # 행동을 선택하는 메소드
     def select_move(self, game_state):
+
         """Choose a random valid move that preserves our own eyes."""
         # 빈 자리 중에서 가중치를 계산함
 
@@ -31,9 +40,12 @@ class RandomBot(Agent):
                         # print(neighbor.row, neighbor.col)
                         weights[neighbor.row][neighbor.col] -= 1
 
-                # 다른 사람 돌이 세 개 이상, 가로 또는 세로로
+                # 다른 사람 돌이 세 개 이상
                 if game_state.board._grid[r][c] == game_state.next_player.other:
                     center = game_state.board._grid[r][c]
+
+                    # 가로 또는 세로로
+
                     # same with row - 1, row + 1
                     if game_state.board.get(neighbors[0]) == center and \
                         game_state.board.get(neighbors[1]) == center:
@@ -42,11 +54,14 @@ class RandomBot(Agent):
 
                         start = neighbors[0].neighbors()[0]
                         # only decrease weight when this is current problem
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+                        if start.col <= game_state.board.num_cols and \
+                            start.row <= game_state.board.num_rows:
+                            if weights[start.row][start.col] != game_state.next_player:
+                                weights[start.row][start.col] -= 50
 
                         end = neighbors[1].neighbors()[1]
-                        if end.row <= game_state.board.num_rows:
+                        if end.col <= game_state.board.num_cols and \
+                            end.row <= game_state.board.num_rows:
                             if weights[end.row][end.col] != game_state.next_player:
                                 weights[end.row][end.col] -= 50
 
@@ -55,11 +70,49 @@ class RandomBot(Agent):
                         game_state.board.get(neighbors[3]) == center:
 
                         start = neighbors[2].neighbors()[2]
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+                        if start.col <= game_state.board.num_cols and \
+                            start.row <= game_state.board.num_rows:
+                            if weights[start.row][start.col] != game_state.next_player:
+                                weights[start.row][start.col] -= 50
 
                         end = neighbors[3].neighbors()[3]
-                        if end.col <= game_state.board.num_cols:
+                        if end.col <= game_state.board.num_cols and \
+                            end.row <= game_state.board.num_rows:
+                            if weights[end.row][end.col] != game_state.next_player:
+                                weights[end.row][end.col] -= 50
+
+                    # 대각선으로 세 개
+                    diagonals = get_diagonals(Point(row=r, col=c))
+                    # / 오른쪽 향한 대각선으로
+
+                    if game_state.board.get(diagonals[0]) == center and \
+                        game_state.board.get(diagonals[3]) == center:
+
+                        start = get_diagonals(diagonals[0])[0]
+                        if start.col <= game_state.board.num_cols and \
+                            start.row <= game_state.board.num_rows:
+                            if weights[start.row][start.col] != game_state.next_player:
+                                weights[start.row][start.col] -= 50
+
+                        end = get_diagonals(diagonals[3])[3]
+                        if end.col <= game_state.board.num_cols and \
+                            end.row <= game_state.board.num_rows:
+                            if weights[end.row][end.col] != game_state.next_player:
+                                weights[end.row][end.col] -= 50
+
+                    # \ 왼쪽 향한 대각선으로
+                    if game_state.board.get(diagonals[1]) == center and \
+                        game_state.board.get(diagonals[2]) == center:
+
+                        start = get_diagonals(diagonals[1])[1]
+                        if start.col <= game_state.board.num_cols and \
+                            start.row <= game_state.board.num_rows:
+                            if weights[start.row][start.col] != game_state.next_player:
+                                weights[start.row][start.col] -= 50
+
+                        end = get_diagonals(diagonals[2])[2]
+                        if end.col <= game_state.board.num_cols and \
+                            end.row <= game_state.board.num_rows:
                             if weights[end.row][end.col] != game_state.next_player:
                                 weights[end.row][end.col] -= 50
 

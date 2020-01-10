@@ -9,7 +9,7 @@ BOARD_SIZE = 15
 
 def main():
     game = connect5_board.GameState.new_game(BOARD_SIZE)
-    bot = mcts.MCTSAgent(500, temperature=1.4)
+    bot = mcts.MCTSAgent(100, temperature=1.25)
 
     while not game.is_over():
         print_board(game.board)
