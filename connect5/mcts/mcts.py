@@ -5,32 +5,6 @@ from connect5 import agent
 from connect5.types import Player
 from connect5.utils import coords_from_point
 
-# 게임의 요소를 문자열로 바꿔주는 함수
-def fmt(x):
-    if x is Player.black:
-        return 'B'
-    if x is Player.white:
-        return 'W'
-    return coords_from_point(x.point)
-
-# 트리를 보여주는 함수
-def show_tree(node, indent='', max_depth=3):
-    if max_depth < 0:
-        return
-    if node is None:
-        return
-    if node.parent is None:
-        print('%sroot' % indent)
-    else:
-        player = node.parent.game_state.next_player
-        move = node.move
-        print('%s%s %s %d %.3f' % (
-            indent, fmt(player), fmt(move),
-            node.num_rollouts,
-            node.winning_frac(player),
-        ))
-    for child in sorted(node.children, key=lambda n: n.num_rollouts, reverse=True):
-        show_tree(child, indent + '  ', max_depth - 1)
 
 # 트리의 노드 클래스
 class MCTSNode(object):
@@ -77,6 +51,14 @@ class MCTSNode(object):
     def winning_frac(self, player):
         return float(self.win_counts[player]) / float(self.num_rollouts)
 
+    def fetch_cached_child(self, childable):
+        for childP in self.children:
+            for child in childP.children:
+                if child.game_state.board._grid == childable.game_state.board._grid:
+                    return child
+        return childable
+
+
 # MCTS 탐색 결과로 돌을 놓는 에이전트
 class MCTSAgent(agent.Agent):
     # 초기화 메소드
@@ -84,10 +66,13 @@ class MCTSAgent(agent.Agent):
         agent.Agent.__init__(self)
         self.num_rounds = num_rounds
         self.temperature = temperature
+        self.cached_tree = None
 
     # 현재 게임 상태에서 다음 돌을 놓을 위치를 결정하는 메소드
     def select_move(self, game_state):
         root = MCTSNode(game_state)
+        if self.cached_tree is not None:
+            root = self.cached_tree.fetch_cached_child(root)
 
         for i in range(self.num_rounds):
             node = root
@@ -102,6 +87,8 @@ class MCTSAgent(agent.Agent):
             while node is not None:
                 node.record_win(winner)
                 node = node.parent
+
+        self.cached_tree = root
 
         scored_moves = [
             (child.winning_frac(game_state.next_player), child.move, child.num_rollouts)
