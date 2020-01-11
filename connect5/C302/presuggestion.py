@@ -1,127 +1,187 @@
-from connect5.board import Move
-from connect5.types import Point
+import random
+import pprint
+from connect5.agent.base import Agent
+from connect5.board import GameState, Move
+from connect5.types import Player, Point
 
-def get_diagonals(point):
-    return [
-        Point(point.row + 1, point.col + 1),
-        Point(point.row + 1, point.col - 1),
-        Point(point.row - 1, point.col + 1),
-        Point(point.row - 1, point.col - 1),
-    ]
+import time
+
+# def get_diagonals(point):
+#     return [
+#         Point(point.row + 1, point.col + 1),
+#         Point(point.row + 1, point.col - 1),
+#         Point(point.row - 1, point.col + 1),
+#         Point(point.row - 1, point.col - 1),
+#     ]
 
 # 임의의 위치에 돌을 놓는 에이전트
-def presuggestion(game_state, ables):
-    '''가중치 계산을 통해 행동 선택'''
+def presuggestion(game_state, moves):
+    # GameState, Move[] -> (best_move: Move, applied_gs: GameState)
+    board = game_state.board
+    num_rows = board.num_rows + 1
+    num_cols = board.num_cols + 1
 
-    # 빈 자리 중에서 가중치를 계산함
+    get_color = lambda p: board.get(p)
 
-    # presuggestion
-    # 자기 색 돌은 +1, 다른 색 돌은 -1, 돌 3개가 연달아 있을 경우 양옆 -50
-    num_rows = game_state.board.num_rows + 1
-    num_cols = game_state.board.num_cols + 1
-    weights = [x[:] for x in [[0] * num_cols] * num_rows]
+    # point 한 칸 위의 돌(row + 1)
+    def get_top_of_point(point):
+        if (point.row + 1 >= num_rows):
+            return None
+        top = Point(point.row + 1, point.col)
+        top_color = get_color(top)
+        if top_color == 0:
+            return None
+        return (top, top_color)
 
-    for r in range(1, num_rows - 1):
-        for c in range(1, num_cols - 1):
-            neighbors = Point(row=r, col=c).neighbors()
-            for neighbor in neighbors:
-                # 자기 돌
-                if game_state.board._grid[r][c] == game_state.next_player:
-                    # print(neighbor.row, neighbor.col)
-                    weights[neighbor.row][neighbor.col] += 1
-                # 다른 사람 돌
-                elif game_state.board._grid[r][c] == game_state.next_player.other:
-                    # print(neighbor.row, neighbor.col)
-                    weights[neighbor.row][neighbor.col] -= 1
+    # point 한 칸 아래의 돌(row - 1)
+    def get_bottom_of_point(point):
+        bottom = Point(point.row - 1, point.col)
+        bottom_color = get_color(bottom)
+        if bottom_color == 0:
+            return None
+        return (bottom, bottom_color)
 
-            # 다른 사람 돌이 세 개 이상
-            if game_state.board._grid[r][c] == game_state.next_player.other:
-                center = game_state.board._grid[r][c]
+    # point 한 칸 오른쪽의 돌(col + 1)
+    def get_right_of_point(point):
+        if (point.col + 1 >= num_cols):
+            return None
+        right = Point(point.row, point.col + 1)
+        right_color = get_color(right)
+        if right_color == 0:
+            return None
+        return (right, right_color)
 
-                # 가로 또는 세로로
+    # point 한 칸 왼쪽의 돌(col + 1)
+    def get_left_of_point(point):
+        left = Point(point.row, point.col - 1)
+        left_color = get_color(left)
+        if left_color == 0:
+            return None
+        return (left, left_color)
 
-                # same with row - 1, row + 1
-                if game_state.board.get(neighbors[0]) == center and \
-                    game_state.board.get(neighbors[1]) == center:
+    # 오른쪽 위로 대각선
+    def get_diagonal_top_right_of_point(point):
+        if (point.row + 1 >= num_rows):
+            return None
+        if (point.col + 1 >= num_cols):
+            return None
+        diagonal = Point(point.row + 1, point.col + 1)
+        diagonal_color = get_color(diagonal)
+        if diagonal_color == 0:
+            return None
+        return (diagonal, diagonal_color)
 
-                    start = neighbors[0].neighbors()[0]
-                    # only decrease weight when this is current problem
-                    if start.col <= game_state.board.num_cols and \
-                        start.row <= game_state.board.num_rows:
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+    # 오른쪽 아래로 대각선
+    def get_diagonal_bottom_right_of_point(point):
+        if (point.col + 1 >= num_cols):
+            return None
+        diagonal = Point(point.row - 1, point.col + 1)
+        diagonal_color = get_color(diagonal)
+        if diagonal_color == 0:
+            return None
+        return (diagonal, diagonal_color)
 
-                    end = neighbors[1].neighbors()[1]
-                    if end.col <= game_state.board.num_cols and \
-                        end.row <= game_state.board.num_rows:
-                        if weights[end.row][end.col] != game_state.next_player:
-                            weights[end.row][end.col] -= 50
+    # 왼쪽 위로 대각선
+    def get_diagonal_top_left_of_point(point):
+        if (point.row + 1 >= num_rows):
+            return None
+        diagonal = Point(point.row + 1, point.col - 1)
+        diagonal_color = get_color(diagonal)
+        if diagonal_color == 0:
+            return None
+        return (diagonal, diagonal_color)
 
-                # same with col - 1, col + 1
-                if game_state.board.get(neighbors[2]) == center and \
-                    game_state.board.get(neighbors[3]) == center:
+    # 왼쪽 아래로 대각선
+    def get_diagonal_bottom_left_of_point(point):
+        diagonal = Point(point.row - 1, point.col - 1)
+        diagonal_color = get_color(diagonal)
+        if diagonal_color == 0:
+            return None
+        return (diagonal, diagonal_color)
 
-                    start = neighbors[2].neighbors()[2]
-                    if start.col <= game_state.board.num_cols and \
-                        start.row <= game_state.board.num_rows:
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+    def check_abstract(point, getter, offset=3):
+        match_color = None
+        is_exist = None
+        for idx in range(offset):
+            is_exist = getter(point)
+            if is_exist:
+                point, this_color = is_exist
+                # print(f'T{idx}', is_exist)
+                if not idx:
+                    match_color = this_color
+                if match_color != this_color:
+                    return False
+            else:
+                return False
+        return True
 
-                    end = neighbors[3].neighbors()[3]
-                    if end.col <= game_state.board.num_cols and \
-                        end.row <= game_state.board.num_rows:
-                        if weights[end.row][end.col] != game_state.next_player:
-                            weights[end.row][end.col] -= 50
+    # point를 기준으로 getter가 생성하는 새로운 돌이 얼만큼 이어지는지 셈
+    def check_count(point, getter):
+        match_color = None
+        is_exist = None
+        count = 0
+        idx = 0
+        while 1:
+            is_exist = getter(point)
+            if is_exist:
+                point, this_color = is_exist
+                if not idx:
+                    match_color = this_color
+                if match_color != this_color:
+                    break
+                count += 1
+            else:
+                break
+            idx += 1
+        return count
 
-                # 대각선으로 세 개
-                diagonals = get_diagonals(Point(row=r, col=c))
-                # / 오른쪽 향한 대각선으로
+    # iterate all moveable moves
+    print([m.point for m in moves])
+    for move in moves:
+        current_point = move.point
 
-                if game_state.board.get(diagonals[0]) == center and \
-                    game_state.board.get(diagonals[3]) == center:
+        # 위에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_top_of_point):
+            print(f'{current_point} 위에 돌 세 개가 있습니다.')
 
-                    start = get_diagonals(diagonals[0])[0]
-                    if start.col <= game_state.board.num_cols and \
-                        start.row <= game_state.board.num_rows:
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+        # 아래에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_bottom_of_point):
+            print(f'{current_point} 아래에 돌 세 개가 있습니다.')
 
-                    end = get_diagonals(diagonals[3])[3]
-                    if end.col <= game_state.board.num_cols and \
-                        end.row <= game_state.board.num_rows:
-                        if weights[end.row][end.col] != game_state.next_player:
-                            weights[end.row][end.col] -= 50
+        if (
+            check_count(current_point, get_top_of_point) +
+            check_count(current_point, get_bottom_of_point)
+        ) >= 3:
+            print(f'{current_point}를 사이로 돌 세 개 이상이 세로 방향으로 이어지려고 합니다.')
 
-                # \ 왼쪽 향한 대각선으로
-                if game_state.board.get(diagonals[1]) == center and \
-                    game_state.board.get(diagonals[2]) == center:
+        if (
+            check_count(current_point, get_right_of_point) +
+            check_count(current_point, get_left_of_point)
+        ) >= 3:
+            print(f'{current_point}를 사이로 돌 세 개 이상이 가로 방향으로 이어지려고 합니다.')
 
-                    start = get_diagonals(diagonals[1])[1]
-                    if start.col <= game_state.board.num_cols and \
-                        start.row <= game_state.board.num_rows:
-                        if weights[start.row][start.col] != game_state.next_player:
-                            weights[start.row][start.col] -= 50
+        # 오른쪽에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_left_of_point):
+            print(f'{current_point} 오른쪽에 돌 세 개가 있습니다.')
 
-                    end = get_diagonals(diagonals[2])[2]
-                    if end.col <= game_state.board.num_cols and \
-                        end.row <= game_state.board.num_rows:
-                        if weights[end.row][end.col] != game_state.next_player:
-                            weights[end.row][end.col] -= 50
+        # 왼쪽에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_right_of_point):
+            print(f'{current_point} 왼쪽에 돌 세 개가 있습니다.')
 
-    min_weight = 100
-    best_candidate = None
-    for r in range(1, num_rows - 1):
-        for c in range(1, num_cols - 1):
-            if weights[r][c] < min_weight:
-                candidate = Move.play(Point(row=r, col=c))
-                if game_state.is_valid_move(candidate) and any(candidate.point == able.point for able in ables):
-                    min_weight = weights[r][c]
-                    best_candidate = candidate
-    if min_weight < 0 and best_candidate is not None:
-        #return Move.play(best_candidate)
-        return (
-            game_state.apply_move(best_candidate),
-            best_candidate,
-        )
-    else:
-        return None
+        # 대각선 오른쪽 위에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_diagonal_top_right_of_point):
+            print(f'{current_point} 대각선 오른쪽 위에 돌 세 개가 있습니다.')
+
+        # 대각선 오른쪽 아래에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_diagonal_bottom_right_of_point):
+            print(f'{current_point} 대각선 오른쪽 아래에 돌 세 개가 있습니다.')
+
+        # 대각선 왼쪽 위에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_diagonal_top_left_of_point):
+            print(f'{current_point} 대각선 왼쪽 위에 돌 세 개가 있습니다.')
+
+        # 대각선 완쪽 아래에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_diagonal_bottom_left_of_point):
+            print(f'{current_point} 대각선 왼쪽 아래에 돌 세 개가 있습니다.')
+
+    return None
