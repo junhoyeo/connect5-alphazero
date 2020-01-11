@@ -8,7 +8,7 @@ from six.moves import input
 def main():
     board_size = 8
     game = connect5_board.GameState.new_game(board_size)
-    bot = C302Bot(1350, 1.15, presuggestion)
+    bot = C302Bot(1350, 1.01, presuggestion, 3, 0.6)
 
     while not game.is_over():
         print_board(game.board)

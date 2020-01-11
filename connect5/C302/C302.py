@@ -58,7 +58,7 @@ class MCTSNode(object):
 
 
 class C302Bot(agent.Agent):
-    def __init__(self, num_rounds, temperature, suggestion_function, least_infer_node_count=3, least_winning_frac=0.5):
+    def __init__(self, num_rounds, temperature, suggestion_function, least_infer_node_count, least_winning_frac):
         agent.Agent.__init__(self)
         self.num_rounds = num_rounds
         self.temperature = temperature
