@@ -135,6 +135,12 @@ def presuggestion(game_state, moves):
             idx += 1
         return count
 
+    def check_between_one(point, getter_pre, getter_post):
+        return (
+            check_count(point, getter_pre) +
+            check_count(point, getter_post)
+        ) >= 3
+
     # iterate all moveable moves
     print([m.point for m in moves])
     for move in moves:
@@ -148,17 +154,8 @@ def presuggestion(game_state, moves):
         if check_abstract(current_point, get_bottom_of_point):
             print(f'{current_point} 아래에 돌 세 개가 있습니다.')
 
-        if (
-            check_count(current_point, get_top_of_point) +
-            check_count(current_point, get_bottom_of_point)
-        ) >= 3:
+        if check_between_one(current_point, get_top_of_point, get_bottom_of_point):
             print(f'{current_point}를 사이로 돌 세 개 이상이 세로 방향으로 이어지려고 합니다.')
-
-        if (
-            check_count(current_point, get_right_of_point) +
-            check_count(current_point, get_left_of_point)
-        ) >= 3:
-            print(f'{current_point}를 사이로 돌 세 개 이상이 가로 방향으로 이어지려고 합니다.')
 
         # 오른쪽에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_left_of_point):
@@ -168,20 +165,29 @@ def presuggestion(game_state, moves):
         if check_abstract(current_point, get_right_of_point):
             print(f'{current_point} 왼쪽에 돌 세 개가 있습니다.')
 
+        if check_between_one(current_point, get_right_of_point, get_left_of_point):
+            print(f'{current_point}를 사이로 돌 세 개 이상이 가로 방향으로 이어지려고 합니다.')
+
         # 대각선 오른쪽 위에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_top_right_of_point):
             print(f'{current_point} 대각선 오른쪽 위에 돌 세 개가 있습니다.')
-
-        # 대각선 오른쪽 아래에 같은 색 돌 세 개가 있나 체크
-        if check_abstract(current_point, get_diagonal_bottom_right_of_point):
-            print(f'{current_point} 대각선 오른쪽 아래에 돌 세 개가 있습니다.')
 
         # 대각선 왼쪽 위에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_top_left_of_point):
             print(f'{current_point} 대각선 왼쪽 위에 돌 세 개가 있습니다.')
 
+        if check_between_one(current_point, get_diagonal_top_right_of_point, get_diagonal_bottom_left_of_point):
+            print(f'{current_point}를 사이로 돌 세 개 이상이 대각선 위 방향으로 이어지려고 합니다.')
+
+        # 대각선 오른쪽 아래에 같은 색 돌 세 개가 있나 체크
+        if check_abstract(current_point, get_diagonal_bottom_right_of_point):
+            print(f'{current_point} 대각선 오른쪽 아래에 돌 세 개가 있습니다.')
+
         # 대각선 완쪽 아래에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_bottom_left_of_point):
             print(f'{current_point} 대각선 왼쪽 아래에 돌 세 개가 있습니다.')
+
+        if check_between_one(current_point, get_diagonal_bottom_right_of_point, get_diagonal_top_left_of_point):
+            print(f'{current_point}를 사이로 돌 세 개 이상이 대각선 아래 방향으로 이어지려고 합니다.')
 
     return None
