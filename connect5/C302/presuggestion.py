@@ -145,7 +145,6 @@ def presuggestion(game_state, moves):
 
         if (not check_pre) or (not check_post):
             return False
-        print(check_pre, check_post)
         return (check_pre + check_post) >= 3
 
     # iterate all moveable moves
