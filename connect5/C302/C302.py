@@ -47,8 +47,6 @@ class MCTSNode(object):
             self.unvisited_moves = [move for move in self.unvisited_moves if move.point != suggested_move.point]
             new_node = MCTSNode(suggested_game_state, self, suggested_move)
             self.children.append(new_node)
-            print('suggestion received!') #debug
-            print(new_node.move)
             return new_node
         else:
             return self.add_random_child()
