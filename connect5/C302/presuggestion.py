@@ -116,8 +116,10 @@ def presuggestion(game_state, moves):
         return True
 
     # point를 기준으로 getter가 생성하는 새로운 돌이 얼만큼 이어지는지 셈
-    def check_count(point, getter):
+    def check_count(point, getter, find_color=False, default_color=None):
         match_color = None
+        if default_color:
+            match_color = default_color
         is_exist = None
         count = 0
         idx = 0
@@ -125,7 +127,7 @@ def presuggestion(game_state, moves):
             is_exist = getter(point)
             if is_exist:
                 point, this_color = is_exist
-                if not idx:
+                if (not idx) and (not match_color):
                     match_color = this_color
                 if match_color != this_color:
                     break
@@ -133,13 +135,18 @@ def presuggestion(game_state, moves):
             else:
                 break
             idx += 1
+        if find_color:
+            return count, match_color
         return count
 
     def check_between_one(point, getter_pre, getter_post):
-        return (
-            check_count(point, getter_pre) +
-            check_count(point, getter_post)
-        ) >= 3
+        check_pre, match_color = check_count(point, getter_pre, find_color=True)
+        check_post = check_count(point, getter_post, default_color=match_color)
+
+        if (not check_pre) or (not check_post):
+            return False
+        print(check_pre, check_post)
+        return (check_pre + check_post) >= 3
 
     # iterate all moveable moves
     # print([m.point for m in moves])
