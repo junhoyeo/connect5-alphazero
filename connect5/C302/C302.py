@@ -5,9 +5,7 @@ from connect5 import agent
 from connect5.types import Player
 
 
-# 트리의 노드 클래스
 class MCTSNode(object):
-    # 초기화 메소드
     def __init__(self, game_state, parent=None, move=None):
         self.game_state = game_state
         self.parent = parent
@@ -21,7 +19,6 @@ class MCTSNode(object):
         self.unvisited_moves = game_state.legal_moves()
         self.is_terminal = self.game_state.is_over()
 
-    # 노드에 무작위 자식 노드를 추가하는 메소드
     def add_random_child(self):
         index = random.randint(0, len(self.unvisited_moves) - 1)
         new_move = self.unvisited_moves.pop(index)
@@ -30,37 +27,39 @@ class MCTSNode(object):
         self.children.append(new_node)
         return new_node
 
-    # 노드의 값을 갱신하는 메소드
-    def record_win(self, winner):
-        if winner is 0:
+    def record_win(self, winner): #No-touch
+        self.num_rollouts += 1
+        if winner is None:
             self.win_counts[Player.black] += 1
             self.win_counts[Player.white] += 1
         else:
             self.win_counts[winner] += 1
-        self.num_rollouts += 1
 
-    # 더 자식 노드를 추가할 수 있는지를 반환하는 메소드
     def can_add_child(self):
         return (not self.is_terminal) and (len(self.unvisited_moves) > 0)
 
-    # 해당 노드의 승률을 구하는 메소드
     def winning_frac(self, player):
         return float(self.win_counts[player]) / float(self.num_rollouts)
 
     def add_suggested_child_or_random(self, suggestion):
         if suggestion is not None:
             suggested_game_state, suggested_move = suggestion
+            print(self.unvisited_moves)
             self.unvisited_moves = [move for move in self.unvisited_moves if move.point != suggested_move.point]
+            print(self.unvisited_moves)
             new_node = MCTSNode(suggested_game_state, self, suggested_move)
             self.children.append(new_node)
+            print('suggestion received!') #debug
+            print(new_node.move)
             return new_node
         else:
             return self.add_random_child()
 
+    def is_leaf(self): #No-touch
+        return len(self.children) == 0
 
-# MCTS 탐색 결과로 돌을 놓는 에이전트
+
 class C302Bot(agent.Agent):
-    # 초기화 메소드
     def __init__(self, num_rounds, temperature, suggestion_function):
         agent.Agent.__init__(self)
         self.num_rounds = num_rounds
@@ -73,12 +72,13 @@ class C302Bot(agent.Agent):
             for childP in self.cached_tree.children:
                 for child in childP.children:
                     if child.game_state.board._grid == game_state.board._grid:
+                        print('cache hit!') #debug
+                        print(child_count(child))
                         child.parent = None
                         return child
         else:
             return None
 
-    # 현재 게임 상태에서 다음 돌을 놓을 위치를 결정하는 메소드
     def select_move(self, game_state):
         root = self.fetch_cached_root(game_state)
         if root is None:
@@ -87,8 +87,10 @@ class C302Bot(agent.Agent):
 
         for i in range(self.num_rounds):
             node = root
-            while not node.can_add_child(): # 내려가기 가치판단?
-                node = self.select_child(node)
+            while (not node.is_terminal) and (not node.is_leaf()):
+                node, is_self = self.select_next_node(node, game_state.next_player)  # 내려가기 가치판단? test select_child
+                if is_self:
+                    break
 
             if node.can_add_child():
                 node = node.add_suggested_child_or_random(self.suggestion_function(node.game_state, node.unvisited_moves))
@@ -107,16 +109,15 @@ class C302Bot(agent.Agent):
                 best_move = child.move
         return best_move
 
-    # 탐색할 자식 노드를 선택하는 메소드
-    def select_child(self, node):
-        total_rollouts = sum(child.num_rollouts for child in node.children)
+    def select_children(self, children): #No-touch
+        total_rollouts = sum(child.num_rollouts for child in children)
         log_rollouts = math.log(total_rollouts)
 
         best_score = -1
         best_child = None
 
-        for child in node.children:
-            win_percentage = child.winning_frac(node.game_state.next_player)
+        for child in children: #No-touch
+            win_percentage = child.winning_frac(child.parent.game_state.next_player) #test
             exploration_factor = math.sqrt(log_rollouts / child.num_rollouts)
             uct_score = win_percentage + self.temperature * exploration_factor
 
@@ -125,7 +126,14 @@ class C302Bot(agent.Agent):
                 best_child = child
         return best_child
 
-    # 게임을 무작위 시뮬레이션 하는 메소드
+    def select_next_node(self, node, player):
+        child_length = len(node.children)
+        if (not (child_length >= (len(node.unvisited_moves) + child_length / 3))) or \
+                ((sum(child.winning_frac(player) for child in node.children) / child_length) < 0.5):
+            return node, True
+        else:
+            return self.select_children(node.children), False
+
     @staticmethod
     def simulate_random_game(game):
         bots = {
@@ -140,4 +148,11 @@ class C302Bot(agent.Agent):
         elif game.winner is "White":
             return Player.white
         else:
-            return 0
+            return None
+
+def child_count(node): #test
+    result = 0
+    for child in node.children:
+        result += 1
+        result += child_count(child)
+    return result
