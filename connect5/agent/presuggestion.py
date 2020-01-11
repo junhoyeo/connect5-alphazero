@@ -1,10 +1,5 @@
-import random
-import pprint
-from connect5.agent.base import Agent
-from connect5.board import GameState, Move
-from connect5.types import Player, Point
-
-import time
+from connect5.board import Move
+from connect5.types import Point
 
 def get_diagonals(point):
     return [

@@ -219,6 +219,7 @@ class MCTSNode(object):
 
     def add_suggested_child_or_random(self, child):
         if (child is not None) and child[1] in self.unvisited_moves:
+            self.unvisited_moves.pop(self.unvisited_moves.index(child[1]))
             new_node = MCTSNode(child[0], self, child[1])
             self.children.append(new_node)
             return new_node
@@ -227,7 +228,7 @@ class MCTSNode(object):
 
 
 # MCTS 탐색 결과로 돌을 놓는 에이전트
-class SuggestionAgent(agent.Agent):
+class C302Bot(agent.Agent):
     # 초기화 메소드
     def __init__(self, num_rounds, temperature, suggestion_function=presuggestion):
         agent.Agent.__init__(self)
@@ -248,7 +249,7 @@ class SuggestionAgent(agent.Agent):
                 node = self.select_child(node)
 
             if node.can_add_child():
-                node = node.add_suggested_child_or_random(self.suggestion_function(game_state))
+                node = node.add_suggested_child_or_random(self.suggestion_function(node.game_state))
 
             winner = self.simulate_random_game(node.game_state)
             while node is not None:
