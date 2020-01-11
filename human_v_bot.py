@@ -2,13 +2,13 @@ from __future__ import print_function
 from connect5 import board as connect5_board
 from connect5 import types
 from connect5.utils import print_board, print_move, point_from_coords
-from connect5.agent.C302 import C302Bot
+from connect5.C302 import C302Bot, presuggestion
 from six.moves import input
 
 def main():
     board_size = 8
     game = connect5_board.GameState.new_game(board_size)
-    bot = C302Bot(3000, 1.15)
+    bot = C302Bot(1350, 1.15, presuggestion)
 
     while not game.is_over():
         print_board(game.board)

@@ -2,15 +2,15 @@ from __future__ import print_function
 from connect5 import board as connect5_board
 from connect5 import types
 from connect5.utils import print_board, print_move
-from connect5.agent.C302 import C302Bot
-from connect5.agent.any import RandomBotA
+from connect5.C302 import C302Bot
+
 
 def main():
     board_size = 8
     game = connect5_board.GameState.new_game(board_size)
     bots = {
-        types.Player.black: C302Bot(1350, 1.15),
-        types.Player.white: RandomBotA(),
+        types.Player.black: C302Bot(5000, 1.15),
+        types.Player.white: C302Bot(5000, 1.15),
     }
 
     while not game.is_over():
