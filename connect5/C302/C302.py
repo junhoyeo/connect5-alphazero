@@ -51,7 +51,7 @@ class MCTSNode(object):
         else:
             return self.add_random_child()
 
-    def is_leaf(self): #No-touch
+    def is_leaf(self):
         return len(self.children) == 0
 
 
@@ -124,8 +124,8 @@ class C302Bot(agent.Agent):
 
     def select_next_node(self, node, player):
         child_length = len(node.children)
-        if (not (child_length >= (len(node.unvisited_moves) + child_length / self.least_infer_node_count))) or \
-                ((sum(child.winning_frac(player) for child in node.children) / child_length) < self.least_winning_frac):
+        if not (child_length >= (len(node.unvisited_moves) + child_length / self.least_infer_node_count)): #or \
+                #((sum(child.winning_frac(player) for child in node.children) / child_length) < self.least_winning_frac):
             return node, True
         else:
             return self.select_children(node.children), False
