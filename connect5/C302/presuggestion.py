@@ -115,6 +115,26 @@ def presuggestion(game_state, moves):
                 return False
         return True
 
+    # point를 기준으로 getter가 생성하는 새로운 돌이 얼만큼 이어지는지 셈
+    def check_count(point, getter):
+        match_color = None
+        is_exist = None
+        count = 0
+        idx = 0
+        while 1:
+            is_exist = getter(point)
+            if is_exist:
+                point, this_color = is_exist
+                if not idx:
+                    match_color = this_color
+                if match_color != this_color:
+                    break
+                count += 1
+            else:
+                break
+            idx += 1
+        return count
+
     # iterate all moveable moves
     print([m.point for m in moves])
     for move in moves:
@@ -127,6 +147,18 @@ def presuggestion(game_state, moves):
         # 아래에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_bottom_of_point):
             print(f'{current_point} 아래에 돌 세 개가 있습니다.')
+
+        if (
+            check_count(current_point, get_top_of_point) +
+            check_count(current_point, get_bottom_of_point)
+        ) >= 3:
+            print(f'{current_point}를 사이로 돌 세 개 이상이 세로 방향으로 이어지려고 합니다.')
+
+        if (
+            check_count(current_point, get_right_of_point) +
+            check_count(current_point, get_left_of_point)
+        ) >= 3:
+            print(f'{current_point}를 사이로 돌 세 개 이상이 가로 방향으로 이어지려고 합니다.')
 
         # 오른쪽에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_left_of_point):
