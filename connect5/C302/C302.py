@@ -19,6 +19,7 @@ class MCTSNode(object):
         self.num_rollouts = 0
         self.children = []
         self.unvisited_moves = game_state.legal_moves()
+        self.is_terminal = self.game_state.is_over()
 
     # 노드에 무작위 자식 노드를 추가하는 메소드
     def add_random_child(self):
@@ -40,28 +41,17 @@ class MCTSNode(object):
 
     # 더 자식 노드를 추가할 수 있는지를 반환하는 메소드
     def can_add_child(self):
-        return len(self.unvisited_moves) > 0
-
-    # 게임의 끝을 판단하는 메소드
-    def is_terminal(self):
-        return self.game_state.is_over()
+        return (not self.is_terminal) and (len(self.unvisited_moves) > 0)
 
     # 해당 노드의 승률을 구하는 메소드
     def winning_frac(self, player):
         return float(self.win_counts[player]) / float(self.num_rollouts)
 
-    def fetch_cached_child(self, childable):
-        for childP in self.children:
-            for child in childP.children:
-                if child.game_state.board._grid == childable.game_state.board._grid:
-                    child.parent = None
-                    return child
-        return childable
-
-    def add_suggested_child_or_random(self, child):
-        if child is not None:
-            self.unvisited_moves = [move for move in self.unvisited_moves if move.point != child[1].point]
-            new_node = MCTSNode(child[0], self, child[1])
+    def add_suggested_child_or_random(self, suggestion):
+        if suggestion is not None:
+            suggested_game_state, suggested_move = suggestion
+            self.unvisited_moves = [move for move in self.unvisited_moves if move.point != suggested_move.point]
+            new_node = MCTSNode(suggested_game_state, self, suggested_move)
             self.children.append(new_node)
             return new_node
         else:
@@ -78,15 +68,26 @@ class C302Bot(agent.Agent):
         self.cached_tree = None
         self.suggestion_function = suggestion_function
 
+    def fetch_cached_root(self, game_state):
+        if not (self.cached_tree is None):
+            for childP in self.cached_tree.children:
+                for child in childP.children:
+                    if child.game_state.board._grid == game_state.board._grid:
+                        child.parent = None
+                        return child
+        else:
+            return None
+
     # 현재 게임 상태에서 다음 돌을 놓을 위치를 결정하는 메소드
     def select_move(self, game_state):
-        root = MCTSNode(game_state)
-        if self.cached_tree is not None:
-            root = self.cached_tree.fetch_cached_child(root)
+        root = self.fetch_cached_root(game_state)
+        if root is None:
+            root = MCTSNode(game_state)
+        self.cached_tree = root
 
         for i in range(self.num_rounds):
             node = root
-            while (not node.can_add_child()) and (not node.is_terminal()):
+            while not node.can_add_child(): # 내려가기 가치판단?
                 node = self.select_child(node)
 
             if node.can_add_child():
@@ -96,8 +97,6 @@ class C302Bot(agent.Agent):
             while node is not None:
                 node.record_win(winner)
                 node = node.parent
-
-        self.cached_tree = root
 
         best_move = None
         best_pct = -1.0
