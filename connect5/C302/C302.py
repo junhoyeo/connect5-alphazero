@@ -87,10 +87,10 @@ class C302Bot(agent.Agent):
 
         for i in range(self.num_rounds):
             node = root
-            prev = None
-            while (not node.is_terminal) and (not node.is_leaf()) and node != prev:
-                prev = node
-                node = self.select_next_node(node, game_state.next_player)  # 내려가기 가치판단? test select_child
+            while (not node.is_terminal) and (not node.is_leaf()):
+                node, is_self = self.select_next_node(node, game_state.next_player)  # 내려가기 가치판단? test select_child
+                if is_self:
+                    break
 
             if node.can_add_child():
                 node = node.add_suggested_child_or_random(self.suggestion_function(node.game_state, node.unvisited_moves))
@@ -133,9 +133,9 @@ class C302Bot(agent.Agent):
                 ((not (child_length >= (len(node.unvisited_moves) + child_length / 2)) \
                  or \
                  (sum(child.winning_frac(player) for child in node.children) / child_length) < 0.5)):
-            return node
+            return (node, True)
         else:
-            return self.select_children(node.children)
+            return (self.select_children(node.children), False)
 
     @staticmethod
     def simulate_random_game(game):
