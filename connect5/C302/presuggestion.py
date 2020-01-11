@@ -99,10 +99,10 @@ def presuggestion(game_state, moves):
             return None
         return (diagonal, diagonal_color)
 
-    def check_abstract(point, getter):
+    def check_abstract(point, getter, offset=3):
         match_color = None
         is_exist = None
-        for idx in range(3):
+        for idx in range(offset):
             is_exist = getter(point)
             if is_exist:
                 point, this_color = is_exist
