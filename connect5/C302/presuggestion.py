@@ -23,26 +23,50 @@ def presuggestion(game_state, moves):
 
     get_color = lambda p: board.get(p)
 
-    # point 한 칸 위의 돌(col + 1)
+    # point 한 칸 위의 돌(row + 1)
     def get_top_of_point(point):
         if (point.row + 1 >= num_rows):
             return None
-        else:
-            top = Point(point.row + 1, point.col)
-            top_color = get_color(top)
-            if top_color == 0:
-                return None
+        top = Point(point.row + 1, point.col)
+        top_color = get_color(top)
+        if top_color == 0:
+            return None
         return (top, top_color)
 
-    # 위에 같은 색 돌 세 개가 있나 체크
-    def check_three_in_top(point):
+    # point 한 칸 아래의 돌(row - 1)
+    def get_bottom_of_point(point):
+        bottom = Point(point.row - 1, point.col)
+        bottom_color = get_color(bottom)
+        if bottom_color == 0:
+            return None
+        return (bottom, bottom_color)
+
+    # point 한 칸 오른쪽의 돌(col + 1)
+    def get_right_of_point(point):
+        if (point.col + 1 >= num_cols):
+            return None
+        right = Point(point.row, point.col + 1)
+        right_color = get_color(right)
+        if right_color == 0:
+            return None
+        return (right, right_color)
+
+    # point 한 칸 왼쪽의 돌(col + 1)
+    def get_left_of_point(point):
+        left = Point(point.row, point.col - 1)
+        left_color = get_color(left)
+        if left_color == 0:
+            return None
+        return (left, left_color)
+
+    def check_abstract(point, getter):
         match_color = None
-        is_top = None
+        is_exist = None
         for idx in range(3):
-            is_top = get_top_of_point(point)
-            if is_top:
-                point, this_color = is_top
-                # print(f'T{idx}', is_top)
+            is_exist = getter(point)
+            if is_exist:
+                point, this_color = is_exist
+                # print(f'T{idx}', is_exist)
                 if not idx:
                     match_color = this_color
                 if match_color != this_color:
@@ -51,12 +75,37 @@ def presuggestion(game_state, moves):
                 return False
         return True
 
+    # 위에 같은 색 돌 세 개가 있나 체크
+    def check_three_in_top(point):
+        return check_abstract(point, get_top_of_point)
+
+    # 아래에 같은 색 돌 세 개가 있나 체크
+    def check_three_in_bottom(point):
+        return check_abstract(point, get_bottom_of_point)
+
+    # 오른쪽에 같은 색 돌 세 개가 있나 체크
+    def check_three_in_left(point):
+        return check_abstract(point, get_left_of_point)
+
+    # 왼쪽에 같은 색 돌 세 개가 있나 체크
+    def check_three_in_right(point):
+        return check_abstract(point, get_right_of_point)
+
     # iterate all moveable moves
     print([m.point for m in moves])
     for move in moves:
         current_point = move.point
 
         if check_three_in_top(current_point):
-            print(current_point)
+            print(f'{current_point} 위에 돌 세 개가 있습니다.')
+
+        if check_three_in_bottom(current_point):
+            print(f'{current_point} 아래에 돌 세 개가 있습니다.')
+
+        if check_three_in_right(current_point):
+            print(f'{current_point} 오른쪽에 돌 세 개가 있습니다.')
+
+        if check_three_in_left(current_point):
+            print(f'{current_point} 왼쪽에 돌 세 개가 있습니다.')
 
     return None
