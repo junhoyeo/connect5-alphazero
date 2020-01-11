@@ -128,14 +128,11 @@ class C302Bot(agent.Agent):
 
     def select_next_node(self, node, player):
         child_length = len(node.children)
-        if node.can_add_child() \
-                and \
-                ((not (child_length >= (len(node.unvisited_moves) + child_length / 2)) \
-                 or \
-                 (sum(child.winning_frac(player) for child in node.children) / child_length) < 0.5)):
-            return (node, True)
+        if (not (child_length >= (len(node.unvisited_moves) + child_length / 3))) or \
+                ((sum(child.winning_frac(player) for child in node.children) / child_length) < 0.5):
+            return node, True
         else:
-            return (self.select_children(node.children), False)
+            return self.select_children(node.children), False
 
     @staticmethod
     def simulate_random_game(game):
