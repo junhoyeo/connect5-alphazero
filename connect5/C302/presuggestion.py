@@ -142,52 +142,79 @@ def presuggestion(game_state, moves):
         ) >= 3
 
     # iterate all moveable moves
-    print([m.point for m in moves])
+    # print([m.point for m in moves])
+    suggestions = []
+
     for move in moves:
         current_point = move.point
 
         # 위에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_top_of_point):
             print(f'{current_point} 위에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         # 아래에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_bottom_of_point):
             print(f'{current_point} 아래에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         if check_between_one(current_point, get_top_of_point, get_bottom_of_point):
             print(f'{current_point}를 사이로 돌 세 개 이상이 세로 방향으로 이어지려고 합니다.')
+            suggestions.append(current_point)
 
         # 오른쪽에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_left_of_point):
             print(f'{current_point} 오른쪽에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         # 왼쪽에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_right_of_point):
             print(f'{current_point} 왼쪽에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         if check_between_one(current_point, get_right_of_point, get_left_of_point):
             print(f'{current_point}를 사이로 돌 세 개 이상이 가로 방향으로 이어지려고 합니다.')
+            suggestions.append(current_point)
 
         # 대각선 오른쪽 위에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_top_right_of_point):
             print(f'{current_point} 대각선 오른쪽 위에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         # 대각선 왼쪽 위에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_top_left_of_point):
             print(f'{current_point} 대각선 왼쪽 위에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         if check_between_one(current_point, get_diagonal_top_right_of_point, get_diagonal_bottom_left_of_point):
             print(f'{current_point}를 사이로 돌 세 개 이상이 대각선 위 방향으로 이어지려고 합니다.')
+            suggestions.append(current_point)
 
         # 대각선 오른쪽 아래에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_bottom_right_of_point):
             print(f'{current_point} 대각선 오른쪽 아래에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         # 대각선 완쪽 아래에 같은 색 돌 세 개가 있나 체크
         if check_abstract(current_point, get_diagonal_bottom_left_of_point):
             print(f'{current_point} 대각선 왼쪽 아래에 돌 세 개가 있습니다.')
+            suggestions.append(current_point)
 
         if check_between_one(current_point, get_diagonal_bottom_right_of_point, get_diagonal_top_left_of_point):
             print(f'{current_point}를 사이로 돌 세 개 이상이 대각선 아래 방향으로 이어지려고 합니다.')
+            suggestions.append(current_point)
 
-    return None
+    max_freq = 0
+    try:
+        chosen = suggestions[0]
+    except IndexError:
+        return None
+    for suggest in suggestions:
+        freq = len([s for s in suggestions if s.row == suggest.row and s.col == suggest.col])
+        if freq > max_freq:
+            max_freq = freq
+            chosen = suggest
+    return (
+        game_state.apply_move(Move.play(chosen)),
+        Move.play(chosen),
+    )
