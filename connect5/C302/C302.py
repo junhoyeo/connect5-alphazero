@@ -44,9 +44,7 @@ class MCTSNode(object):
     def add_suggested_child_or_random(self, suggestion):
         if suggestion is not None:
             suggested_game_state, suggested_move = suggestion
-            print(self.unvisited_moves)
             self.unvisited_moves = [move for move in self.unvisited_moves if move.point != suggested_move.point]
-            print(self.unvisited_moves)
             new_node = MCTSNode(suggested_game_state, self, suggested_move)
             self.children.append(new_node)
             print('suggestion received!') #debug
@@ -60,20 +58,20 @@ class MCTSNode(object):
 
 
 class C302Bot(agent.Agent):
-    def __init__(self, num_rounds, temperature, suggestion_function):
+    def __init__(self, num_rounds, temperature, suggestion_function, least_infer_node_count=3, least_winning_frac=0.5):
         agent.Agent.__init__(self)
         self.num_rounds = num_rounds
         self.temperature = temperature
         self.cached_tree = None
         self.suggestion_function = suggestion_function
+        self.least_infer_node_count = least_infer_node_count
+        self.least_winning_frac = least_winning_frac
 
     def fetch_cached_root(self, game_state):
         if not (self.cached_tree is None):
             for childP in self.cached_tree.children:
                 for child in childP.children:
                     if child.game_state.board._grid == game_state.board._grid:
-                        print('cache hit!') #debug
-                        print(child_count(child))
                         child.parent = None
                         return child
         else:
@@ -88,7 +86,7 @@ class C302Bot(agent.Agent):
         for i in range(self.num_rounds):
             node = root
             while (not node.is_terminal) and (not node.is_leaf()):
-                node, is_self = self.select_next_node(node, game_state.next_player)  # 내려가기 가치판단? test select_child
+                node, is_self = self.select_next_node(node, game_state.next_player)
                 if is_self:
                     break
 
@@ -109,14 +107,14 @@ class C302Bot(agent.Agent):
                 best_move = child.move
         return best_move
 
-    def select_children(self, children): #No-touch
+    def select_children(self, children):
         total_rollouts = sum(child.num_rollouts for child in children)
         log_rollouts = math.log(total_rollouts)
 
         best_score = -1
         best_child = None
 
-        for child in children: #No-touch
+        for child in children:
             win_percentage = child.winning_frac(child.parent.game_state.next_player) #test
             exploration_factor = math.sqrt(log_rollouts / child.num_rollouts)
             uct_score = win_percentage + self.temperature * exploration_factor
@@ -128,8 +126,8 @@ class C302Bot(agent.Agent):
 
     def select_next_node(self, node, player):
         child_length = len(node.children)
-        if (not (child_length >= (len(node.unvisited_moves) + child_length / 3))) or \
-                ((sum(child.winning_frac(player) for child in node.children) / child_length) < 0.5):
+        if (not (child_length >= (len(node.unvisited_moves) + child_length / self.least_infer_node_count))) or \
+                ((sum(child.winning_frac(player) for child in node.children) / child_length) < self.least_winning_frac):
             return node, True
         else:
             return self.select_children(node.children), False
@@ -149,10 +147,3 @@ class C302Bot(agent.Agent):
             return Player.white
         else:
             return None
-
-def child_count(node): #test
-    result = 0
-    for child in node.children:
-        result += 1
-        result += child_count(child)
-    return result
