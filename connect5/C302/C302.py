@@ -47,16 +47,16 @@ class MCTSNode(object):
             self.unvisited_moves = [move for move in self.unvisited_moves if move.point != suggested_move.point]
             new_node = MCTSNode(suggested_game_state, self, suggested_move)
             self.children.append(new_node)
-            return new_node
+            return new_node, True
         else:
-            return self.add_random_child()
+            return self.add_random_child(), False
 
     def is_leaf(self):
         return len(self.children) == 0
 
 
 class C302Bot(agent.Agent):
-    def __init__(self, num_rounds, temperature, suggestion_function, least_infer_node_count, least_winning_frac):
+    def __init__(self, num_rounds, temperature, suggestion_function, least_infer_node_count, least_winning_frac, sim_for_sug):
         agent.Agent.__init__(self)
         self.num_rounds = num_rounds
         self.temperature = temperature
@@ -64,6 +64,7 @@ class C302Bot(agent.Agent):
         self.suggestion_function = suggestion_function
         self.least_infer_node_count = least_infer_node_count
         self.least_winning_frac = least_winning_frac
+        self.sim_for_sug = sim_for_sug
 
     def fetch_cached_root(self, game_state):
         if not (self.cached_tree is None):
@@ -87,14 +88,18 @@ class C302Bot(agent.Agent):
                 node, is_self = self.select_next_node(node, game_state.next_player)
                 if is_self:
                     break
-
+            is_sim = False
             if node.can_add_child():
-                node = node.add_suggested_child_or_random(self.suggestion_function(node.game_state, node.unvisited_moves))
+                node, is_sim = node.add_suggested_child_or_random(self.suggestion_function(node.game_state, node.unvisited_moves))
 
-            winner = self.simulate_random_game(node.game_state)
-            while node is not None:
-                node.record_win(winner)
-                node = node.parent
+            for _ in range(self.sim_for_sug):
+                winner = self.simulate_random_game(node.game_state)
+                scope = node
+                while scope is not None:
+                    scope.record_win(winner)
+                    scope = scope.parent
+                if not is_sim:
+                    break
 
         best_move = None
         best_pct = -1.0
@@ -124,8 +129,8 @@ class C302Bot(agent.Agent):
 
     def select_next_node(self, node, player):
         child_length = len(node.children)
-        if not (child_length >= (len(node.unvisited_moves) + child_length / self.least_infer_node_count)): #or \
-                #((sum(child.winning_frac(player) for child in node.children) / child_length) < self.least_winning_frac):
+        if not (child_length >= (len(node.unvisited_moves) + child_length / self.least_infer_node_count) and \
+                (max(child.winning_frac(player) for child in node.children) > self.least_winning_frac)):
             return node, True
         else:
             return self.select_children(node.children), False
